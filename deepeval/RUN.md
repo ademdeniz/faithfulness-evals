@@ -8,7 +8,7 @@
 cd ~/faithfulness-evals/deepeval
 python3 -m venv .venv-deepeval
 source .venv-deepeval/bin/activate
-pip install deepeval anthropic
+pip install -r ../requirements-deepeval.txt
 
 python3 faithfulness_demo.py
 ```

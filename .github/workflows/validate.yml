@@ -1,0 +1,39 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Python syntax
+        run: python -m py_compile tools/*.py deepeval/*.py ragas/*.py
+      - name: Test normalized result contract
+        run: python -m unittest tools/test_result_schema.py
+      - name: Validate gold dataset
+        run: python -c "import json; data=json.load(open('data/gold_cases.json')); assert len(data) >= 1 and all('expected_pass' in c for c in data)"
+      - name: Validate gold prediction join
+        run: python -c "import json; from tools.gold_accuracy import join_predictions; gold=json.load(open('data/demo_gold_cases.json')); result=[{'cases': [{'case_id': 'grounded', 'passed': True}, {'case_id': 'hallucinated', 'passed': False}]}]; assert join_predictions(gold, result)"
+      - name: Validate retrieval dataset and metrics
+        run: python tools/retrieval_correctness.py data/metric_cases.json
+      - name: Validate comparison tool
+        run: python tools/compare_results.py data/demo_results.json
+      - name: Validate metadata utilities
+        run: python -c "from tools.run_metadata import summarize_metadata; assert summarize_metadata([{'model': 'test', 'latency_ms': 1, 'estimated_cost_usd': 0.01}])['total_latency_ms'] == 1"
+      - name: Validate HTML report generator
+        run: python tools/html_report.py data/demo_results.json /tmp/faithfulness-report.html
+      - name: Validate provider usage utilities
+        run: python -c "from tools.provider_usage import extract_usage, estimate_cost; u=extract_usage({'usage': {'input_tokens': 100, 'output_tokens': 20}}); assert estimate_cost(u, 1, 1) == 0.00012"
+      - name: Validate workflow safeguards
+        run: python tools/validate_workflows.py .github/workflows
+      - name: Check patch formatting
+        run: git diff --check

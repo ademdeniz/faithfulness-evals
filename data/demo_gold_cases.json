@@ -1,0 +1,10 @@
+[
+  {
+    "case_id": "grounded",
+    "expected_pass": true
+  },
+  {
+    "case_id": "hallucinated",
+    "expected_pass": false
+  }
+]
