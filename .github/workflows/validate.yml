@@ -26,11 +26,8 @@ jobs:
           c.get('review_status') == 'pending_clinician_review' and c.get('claims')
           for c in data)"
       - name: Validate gold prediction join
-        run: >-
-          python -c "import json; from tools.gold_accuracy import join_predictions;
-          gold=json.load(open('data/demo_gold_cases.json')); result=[{'cases':
-          [{'case_id': 'grounded', 'passed': True}, {'case_id': 'hallucinated',
-          'passed': False}]}]; assert join_predictions(gold, result)"
+        run: |
+          python -c 'import json; from tools.gold_accuracy import join_predictions; gold=json.load(open("data/demo_gold_cases.json")); result=[{"cases": [{"case_id": "grounded", "passed": True}, {"case_id": "hallucinated", "passed": False}]}]; assert join_predictions(gold, result)'
       - name: Validate retrieval dataset and metrics
         run: python tools/retrieval_correctness.py data/metric_cases.json
       - name: Validate comparison tool
