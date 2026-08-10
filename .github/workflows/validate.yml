@@ -20,7 +20,7 @@ jobs:
       - name: Test normalized result contract
         run: python -m unittest tools/test_result_schema.py
       - name: Validate gold dataset
-        run: python -c "import json; data=json.load(open('data/gold_cases.json')); assert len(data) >= 1 and all('expected_pass' in c for c in data)"
+        run: python -c "import json; data=json.load(open('data/gold_cases.json')); assert len(data) >= 1 and all(c.get('expected_pass') is not None and c.get('review_status') == 'pending_clinician_review' and c.get('claims') for c in data)"
       - name: Validate gold prediction join
         run: python -c "import json; from tools.gold_accuracy import join_predictions; gold=json.load(open('data/demo_gold_cases.json')); result=[{'cases': [{'case_id': 'grounded', 'passed': True}, {'case_id': 'hallucinated', 'passed': False}]}]; assert join_predictions(gold, result)"
       - name: Validate retrieval dataset and metrics
@@ -41,6 +41,10 @@ jobs:
         run: python tools/regression.py data/regression_baseline.json data/regression_current.json
       - name: Validate reliability analysis
         run: python tools/reliability.py data/reliability_fixture.json
+      - name: Compare multi-judge fixture
+        run: python tools/reliability.py data/multi_judge_fixture.json
+      - name: Check gold regression accuracy
+        run: python tools/gold_accuracy.py data/gold_predictions.json --min-accuracy 0.90
       - name: Validate schema migration
         run: python -c "from tools.schema_migrations import migrate_result; assert migrate_result({'framework': 'legacy', 'metric': 'faithfulness', 'cases': []})['schema_version'] == 1"
       - name: Scan checked-in evaluation data
