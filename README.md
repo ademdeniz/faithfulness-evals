@@ -358,6 +358,45 @@ python3 tools/regression.py \
 The default gates allow at most a five-point accuracy drop and 25% increases in
 latency or estimated cost. A failed gate returns a non-zero exit code for CI.
 
+## Judge reliability
+
+Analyze repeated framework runs with:
+
+```bash
+python3 tools/reliability.py data/reliability_fixture.json
+```
+
+The report shows per-case verdict agreement, verdict flips, mean score, and
+population score standard deviation. Repeated runs expose borderline cases that
+single-run evaluations can hide.
+
+## Result schema versioning
+
+Normalized results include `schema_version`. Legacy files without a version can
+be upgraded with:
+
+```python
+from tools.schema_migrations import migrate_result
+
+current = migrate_result(legacy_result)
+```
+
+Readers reject future schema versions they do not understand instead of
+silently misinterpreting fields.
+
+## Privacy scanning
+
+Before sharing evaluation artifacts, scan them for common sensitive patterns:
+
+```bash
+python3 tools/privacy_scan.py results/report.html
+```
+
+The scanner detects API keys, email addresses, phone numbers, and medical
+record numbers. It reports only category and character offset, never the
+detected value. This is a safeguard, not a replacement for clinical privacy
+review.
+
 ## Retrieval and answer correctness
 
 Faithfulness does not measure whether retrieval found the right evidence or

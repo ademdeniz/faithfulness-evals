@@ -37,5 +37,16 @@ jobs:
         run: python tools/validate_workflows.py .github/workflows
       - name: Validate Promptfoo adapter
         run: python tools/promptfoo_results.py data/promptfoo_result_fixture.json /tmp/promptfoo-result.json
+      - name: Check regression baseline
+        run: python tools/regression.py data/regression_baseline.json data/regression_current.json
+      - name: Validate reliability analysis
+        run: python tools/reliability.py data/reliability_fixture.json
+      - name: Validate schema migration
+        run: python -c "from tools.schema_migrations import migrate_result; assert migrate_result({'framework': 'legacy', 'metric': 'faithfulness', 'cases': []})['schema_version'] == 1"
+      - name: Scan checked-in evaluation data
+        run: |
+          for file in data/*.json; do
+            python tools/privacy_scan.py "$file"
+          done
       - name: Check patch formatting
         run: git diff --check
