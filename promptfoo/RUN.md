@@ -8,7 +8,7 @@ fences or explanatory text.
 
 ```bash
 nvm use 24
-cd /path/to/faithfulness-evals/promptfoo
+cd "$(git rev-parse --show-toplevel)/promptfoo"
 ```
 
 Run the two-case judge test:
@@ -54,10 +54,12 @@ Notes:
   fail. Treat that as an evaluation result, not automatically as an
   infrastructure error.
 
-From the repository root, normalize a Promptfoo JSON result for comparison:
+From anywhere inside the repository checkout, normalize the latest Promptfoo
+JSON output for comparison:
 
 ```bash
+cd "$(git rev-parse --show-toplevel)"
 python3 tools/promptfoo_results.py \
-  path/to/promptfoo-output.json \
+  .promptfoo/output.json \
   results/promptfoo-results.json
 ```
