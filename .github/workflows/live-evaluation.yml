@@ -39,7 +39,7 @@ jobs:
           SUITE: ${{ inputs.suite }}
           MAX_TESTS: ${{ inputs.max_tests }}
         run: |
-          count=$(grep -c 'description:' "$SUITE")
+          count=$(grep -Ec '^  - description:' "$SUITE")
           test "$count" -le "$MAX_TESTS"
       - name: Run selected evaluation
         working-directory: promptfoo
