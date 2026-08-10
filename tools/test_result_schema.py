@@ -13,10 +13,11 @@ from tools.retrieval_correctness import evaluate_cases
 from tools.eval_result import CaseResult, ClaimResult, EvaluationResult
 from tools.run_metadata import summarize_metadata
 from tools.html_report import render_report
-from tools.provider_usage import estimate_cost, extract_usage
+from tools.provider_usage import estimate_cost, extract_usage, usage_from_objects
 from tools.retry import retry_call
 from tools.validate_workflows import validate_workflow
 from tools.promptfoo_results import normalize_promptfoo
+from tools.regression import compare_baseline
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -209,6 +210,12 @@ class ResultSchemaTest(unittest.TestCase):
         self.assertEqual(anthropic, {"input_tokens": 1000, "output_tokens": 200})
         self.assertEqual(openai, anthropic)
         self.assertEqual(estimate_cost(anthropic, 3.0, 15.0), 0.006)
+        self.assertEqual(
+            usage_from_objects(
+                type("Response", (), {"usage_metadata": {"input_tokens": 4, "output_tokens": 2}})()
+            ),
+            {"input_tokens": 4, "output_tokens": 2},
+        )
 
     def test_retry_retries_transient_errors_but_not_permanent_errors(self):
         attempts = 0
@@ -272,6 +279,25 @@ class ResultSchemaTest(unittest.TestCase):
         self.assertEqual(result["latency_ms"], 300)
         self.assertEqual(result["input_tokens"], 210)
         self.assertFalse(result["cases"][1]["passed"])
+
+    def test_regression_baseline_accepts_small_changes_and_rejects_large_drops(self):
+        baseline = {
+            "accuracy": 1.0,
+            "latency_ms": 1000,
+            "estimated_cost_usd": 0.05,
+        }
+        self.assertTrue(
+            compare_baseline(
+                baseline,
+                {"accuracy": 0.96, "latency_ms": 1200, "estimated_cost_usd": 0.06},
+            )["passed"]
+        )
+        self.assertFalse(
+            compare_baseline(
+                baseline,
+                {"accuracy": 0.9, "latency_ms": 1000, "estimated_cost_usd": 0.05},
+            )["passed"]
+        )
 
 
 if __name__ == "__main__":

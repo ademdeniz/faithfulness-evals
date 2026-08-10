@@ -10,6 +10,7 @@ Needs: ANTHROPIC_API_KEY in the environment.
 """
 import asyncio
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -22,6 +23,7 @@ from ragas.llms import LangchainLLMWrapper
 from langchain_anthropic import ChatAnthropic
 from eval_result import CaseResult, ClaimResult, EvaluationResult
 from retry import async_retry_call
+from provider_usage import estimate_cost, usage_from_objects
 
 llm = LangchainLLMWrapper(ChatAnthropic(model="claude-sonnet-4-6", temperature=0))
 scorer = Faithfulness(llm=llm)
@@ -100,6 +102,15 @@ async def main(json_output: bool):
         model="claude-sonnet-4-6",
         latency_ms=round((time.perf_counter() - started) * 1000, 2),
     )
+    usage = usage_from_objects(scorer, llm)
+    if usage:
+        result.input_tokens = usage["input_tokens"]
+        result.output_tokens = usage["output_tokens"]
+        result.estimated_cost_usd = estimate_cost(
+            usage,
+            float(os.getenv("ANTHROPIC_INPUT_USD_PER_MILLION", "0")),
+            float(os.getenv("ANTHROPIC_OUTPUT_USD_PER_MILLION", "0")),
+        )
     if json_output:
         print(result.to_json())
     else:

@@ -8,6 +8,7 @@ Run:  python3 faithfulness_demo.py [--json]
 Needs: ANTHROPIC_API_KEY in the environment.
 """
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -19,6 +20,7 @@ from deepeval.metrics import FaithfulnessMetric
 from deepeval.models import AnthropicModel
 from eval_result import CaseResult, ClaimResult, EvaluationResult
 from retry import retry_call
+from provider_usage import estimate_cost, usage_from_objects
 
 judge = AnthropicModel(model="claude-sonnet-4-6", temperature=0)
 
@@ -103,6 +105,15 @@ def main() -> None:
         model="claude-sonnet-4-6",
         latency_ms=round((time.perf_counter() - started) * 1000, 2),
     )
+    usage = usage_from_objects(metric, judge)
+    if usage:
+        result.input_tokens = usage["input_tokens"]
+        result.output_tokens = usage["output_tokens"]
+        result.estimated_cost_usd = estimate_cost(
+            usage,
+            float(os.getenv("ANTHROPIC_INPUT_USD_PER_MILLION", "0")),
+            float(os.getenv("ANTHROPIC_OUTPUT_USD_PER_MILLION", "0")),
+        )
     if args.json:
         print(result.to_json())
         return
