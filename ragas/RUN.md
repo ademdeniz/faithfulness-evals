@@ -3,6 +3,9 @@
 Set `ANTHROPIC_API_KEY` in the shell where the live demo will run. Run these
 commands from the repository checkout:
 
+Copy only the commands inside the code blocks, not the surrounding Markdown
+fences or explanatory text.
+
 ```bash
 cd /path/to/faithfulness-evals
 python3 -m venv .venv-ragas
@@ -34,6 +37,7 @@ To run DeepEval and RAGAS together with normalized output, use the shared
 runner after creating both environments:
 
 ```bash
+cd /path/to/faithfulness-evals
 python3 tools/run_evals.py \
   --deepeval-python .venv-deepeval/bin/python \
   --ragas-python .venv-ragas/bin/python
