@@ -1,0 +1,9 @@
+.venv/
+venv/
+.venv-ragas/
+__pycache__/
+*.pyc
+.env
+.promptfoo/
+node_modules/
+.DS_Store
