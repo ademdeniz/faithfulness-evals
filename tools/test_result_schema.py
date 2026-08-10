@@ -16,6 +16,7 @@ from tools.html_report import render_report
 from tools.provider_usage import estimate_cost, extract_usage
 from tools.retry import retry_call
 from tools.validate_workflows import validate_workflow
+from tools.promptfoo_results import normalize_promptfoo
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -259,6 +260,18 @@ class ResultSchemaTest(unittest.TestCase):
         )
 
         self.assertEqual(errors, [])
+
+    def test_promptfoo_results_normalize_to_shared_schema(self):
+        payload = json.loads(
+            (ROOT / "data" / "promptfoo_result_fixture.json").read_text()
+        )
+        result = normalize_promptfoo(payload)
+
+        self.assertEqual(result["framework"], "promptfoo")
+        self.assertEqual([case["case_id"] for case in result["cases"]], ["grounded", "hallucinated"])
+        self.assertEqual(result["latency_ms"], 300)
+        self.assertEqual(result["input_tokens"], 210)
+        self.assertFalse(result["cases"][1]["passed"])
 
 
 if __name__ == "__main__":

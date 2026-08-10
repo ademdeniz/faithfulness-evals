@@ -35,5 +35,7 @@ jobs:
         run: python -c "from tools.provider_usage import extract_usage, estimate_cost; u=extract_usage({'usage': {'input_tokens': 100, 'output_tokens': 20}}); assert estimate_cost(u, 1, 1) == 0.00012"
       - name: Validate workflow safeguards
         run: python tools/validate_workflows.py .github/workflows
+      - name: Validate Promptfoo adapter
+        run: python tools/promptfoo_results.py data/promptfoo_result_fixture.json /tmp/promptfoo-result.json
       - name: Check patch formatting
         run: git diff --check
