@@ -486,18 +486,6 @@ not establish medical correctness or safety, and provider token/cost metadata
 may be unavailable. Live results can also vary with model versions, prompts,
 retrieval context, and judge calibration.
 
-## Interview walkthrough
-
-1. Run the offline validation commands in [Quickstart](#quickstart).
-2. Show the adversarial cases and explain why judge validation comes before
-   comparing generators.
-3. Run the manual live workflow only when API credentials and a bounded budget
-   are available.
-4. Inspect normalized JSON, compare framework disagreement, and generate the
-   HTML report.
-5. Discuss the limitations and the clinician-review placeholder rather than
-   presenting starter labels as clinical evidence.
-
 ## Roadmap
 
 ### Completed
