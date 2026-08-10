@@ -4,6 +4,54 @@ A hands-on project for evaluating the faithfulness of LLM-generated medical cont
 
 Every judge in this repo is Claude (Anthropic). All three frameworks default to OpenAI, so pointing them at Claude is a deliberate configuration step in each one, documented below.
 
+## Quickstart
+
+### 1. Run offline validation
+
+No API key or framework installation is required:
+
+```bash
+python3 -m unittest tools/test_result_schema.py
+python3 -m py_compile tools/*.py deepeval/*.py ragas/*.py
+python3 tools/retrieval_correctness.py data/metric_cases.json
+python3 tools/compare_results.py data/demo_results.json
+```
+
+### 2. Install the live framework environments
+
+Use separate environments because DeepEval and RAGAS have incompatible
+dependency constraints:
+
+```bash
+python3 -m venv deepeval/.venv-deepeval
+deepeval/.venv-deepeval/bin/pip install -r requirements-deepeval.txt
+
+python3 -m venv .venv-ragas
+.venv-ragas/bin/pip install -r requirements-ragas.txt
+```
+
+### 3. Run the Python evaluations
+
+```bash
+export ANTHROPIC_API_KEY=your-key
+python3 tools/run_evals.py \
+  --deepeval-python deepeval/.venv-deepeval/bin/python \
+  --ragas-python .venv-ragas/bin/python
+```
+
+This writes normalized output to `results/python-results.json`. Generate a
+shareable report with:
+
+```bash
+python3 tools/html_report.py \
+  results/python-results.json \
+  results/report.html
+```
+
+For Promptfoo, use Node 24 and follow [`promptfoo/RUN.md`](promptfoo/RUN.md).
+Live GitHub Actions runs are manual-only and require the repository
+`ANTHROPIC_API_KEY` secret.
+
 ## What "faithfulness" means (and what it does not)
 
 **Faithfulness** = does every claim in an answer trace back to the provided source material?
@@ -64,7 +112,7 @@ In Promptfoo terms: the `providers:` list is the lineup of contestants, and the 
 faithfulness-evals/
 ├── promptfoo/
 │   ├── 01_faithfulness_pass_fail.yaml   # 2-case judge test (echo provider)
-│   ├── 02_faithfulness_suite_20.yaml    # 20-case suite: 10 grounded, 10 adversarial
+│   ├── 02_faithfulness_suite_20.yaml    # 30-case suite: 15 grounded, 15 adversarial
 │   ├── 03_generator_test.yaml           # 3 live models graded by 1 judge (sparse source)
 │   ├── 04_generator_enriched.yaml       # same as 03 but enriched source (controlled experiment)
 │   └── RUN.md
@@ -78,11 +126,11 @@ faithfulness-evals/
 └── README.md
 ```
 
-## The 20-case suite (`02`) explained
+## The 30-case suite (`02`) explained
 
-The suite is deliberately 10 grounded + 10 adversarial, so a ~50% pass rate is by design. Rows 1-10 should be green; rows 11-20 should be red. Any row that disagrees with its label is a finding about the judge, not a bad result.
+The suite is deliberately 15 grounded + 15 adversarial, so a ~50% pass rate is by design. Rows 1-15 should be green; rows 16-30 should be red. Any row that disagrees with its label is a finding about the judge, not a bad result.
 
-The 10 adversarial cases each encode a different hallucination type, so the suite tests breadth of detection, not just one failure:
+The 15 adversarial cases each encode a different hallucination type, so the suite tests breadth of detection, not just one failure:
 
 | # | Hallucination type | Example |
 |---|---|---|
@@ -129,6 +177,7 @@ Per-framework run steps are in `promptfoo/RUN.md`, `deepeval/RUN.md`, and `ragas
 
 - Node 24+ is required for Promptfoo (Node 22 is rejected).
 - DeepEval and RAGAS conflict on the `click` version if installed in the same virtualenv. Use a separate venv per framework.
+- Python dependencies are pinned in `requirements-deepeval.txt` and `requirements-ragas.txt`; install the matching file rather than the aggregate `requirements.txt`.
 - All scripts require `ANTHROPIC_API_KEY` in the environment:
 
   ```bash
@@ -136,6 +185,158 @@ Per-framework run steps are in `promptfoo/RUN.md`, `deepeval/RUN.md`, and `ragas
   ```
 
 - Always `cd` into the relevant subfolder before running, and use `--no-cache` with Promptfoo to guarantee a fresh run rather than a cached result.
+
+## Normalized results
+
+The Python demos support a shared JSON schema with `case_id`, `score`, `passed`,
+`reason`, and claim-level `claims` fields. Each claim includes its text, whether
+it is supported, and the supporting evidence passages when available. Run both demos and write one combined result file
+with:
+
+```bash
+python3 tools/run_evals.py \
+  --deepeval-python deepeval/.venv-deepeval/bin/python \
+  --ragas-python .venv-ragas/bin/python
+```
+
+The two executable options are important because DeepEval and RAGAS can require
+incompatible dependency versions. They default to the current Python
+interpreter for convenience. The individual demos still support their original
+human-readable output; append `--json` when integrating them with another
+runner.
+
+## Continuous validation
+
+Pull requests run offline checks through
+[`.github/workflows/validate.yml`](.github/workflows/validate.yml). These checks
+cover Python syntax, the normalized result contract, and patch formatting. The
+live framework evaluations remain opt-in because they require API keys and incur
+model costs. Live API evaluations are available only through the manually
+dispatched [live workflow](/Users/ademgaric/faithfulness-evals.worktrees/framework-improvement-suggestions/.github/workflows/live-evaluation.yml).
+It requires an `ANTHROPIC_API_KEY` repository secret, limits runtime to 15
+minutes, and enforces an explicit maximum test count. Normal pushes and pull
+requests never make provider calls.
+
+The same manual workflow includes isolated DeepEval and RAGAS jobs. Each job
+installs its pinned requirements separately because those frameworks have
+incompatible dependency constraints. All three jobs have a 15-minute timeout
+and require the same repository secret.
+
+Successful live runs retain framework outputs as GitHub Actions artifacts. A
+follow-up workflow builds and publishes the dependency-free HTML report as the
+`faithfulness-html-report` artifact for download.
+
+## Gold labels and accuracy
+
+Human reviewers can label cases in [`data/gold_cases.json`](data/gold_cases.json)
+with the expected faithfulness verdict. The offline metrics helper accepts the
+same cases with a `predicted_pass` field added by a judge adapter:
+
+```bash
+python3 tools/gold_accuracy.py predictions.json
+```
+
+It reports accuracy plus the confusion counts needed to distinguish false
+positives from false negatives. The included labels are starter gold data and
+should be reviewed by a qualified medical subject-matter expert before being
+used as a production benchmark.
+
+To score normalized framework output directly, use matching `case_id` values:
+
+```bash
+python3 tools/gold_accuracy.py \
+  --gold data/demo_gold_cases.json \
+  --results results/python-results.json
+```
+
+The adapter fails when a gold case has no framework prediction, rather than
+silently dropping it from the accuracy calculation.
+
+## Cross-framework comparison
+
+Compare normalized outputs from multiple frameworks with:
+
+```bash
+python3 tools/compare_results.py results/python-results.json
+```
+
+The report groups matching `case_id` values, shows each framework's score and
+verdict, flags verdict disagreements, and reports score spread. This makes
+claim-decomposition differences visible without treating different score
+scales as interchangeable.
+
+## Execution metadata
+
+Normalized results can include the judge model, latency, token counts, and
+estimated cost:
+
+```json
+{
+  "model": "claude-sonnet-4-6",
+  "latency_ms": 842,
+  "input_tokens": 1200,
+  "output_tokens": 180,
+  "estimated_cost_usd": 0.01
+}
+```
+
+Use `tools.run_metadata.summarize_metadata` to aggregate these fields across
+framework runs. Missing metadata is reported explicitly rather than treated as
+zero.
+
+The DeepEval and RAGAS demos now populate `model` and `latency_ms` automatically
+when run with `--json`. Token and cost fields remain optional because provider
+response usage formats differ between framework versions.
+
+Provider usage helpers in [`tools/provider_usage.py`](tools/provider_usage.py)
+accept both Anthropic-style (`input_tokens`/`output_tokens`) and OpenAI-style
+(`prompt_tokens`/`completion_tokens`) responses. Prices are passed explicitly
+to `estimate_cost`; no pricing assumptions are hidden in the evaluator.
+
+Transient timeout, connection, HTTP 429, and HTTP 5xx failures receive bounded
+exponential retries through [`tools/retry.py`](tools/retry.py). Permanent errors
+are raised immediately. The shared runner also applies a per-framework timeout
+and configurable attempt limit:
+
+```bash
+python3 tools/run_evals.py --timeout-seconds 900 --attempts 2
+```
+
+Retry events are emitted as structured JSON to stderr, keeping normalized JSON
+results on stdout clean for pipelines. Events include the operation name,
+attempt number, next attempt, and error type.
+
+The offline CI suite also validates security-critical workflow invariants,
+including read-only permissions, manual-only live execution, API-key checks, and
+job timeouts.
+
+## HTML report
+
+Generate a shareable, dependency-free report from normalized results:
+
+```bash
+python3 tools/html_report.py \
+  data/demo_results.json \
+  results/report.html
+```
+
+The report includes framework, case, score, verdict, reason, and cross-framework
+agreement when multiple frameworks are present.
+
+## Retrieval and answer correctness
+
+Faithfulness does not measure whether retrieval found the right evidence or
+whether the answer is medically correct. The starter dataset in
+[`data/metric_cases.json`](data/metric_cases.json) records relevant and
+retrieved context IDs plus an answer-correctness label. Run:
+
+```bash
+python3 tools/retrieval_correctness.py data/metric_cases.json
+```
+
+The report includes macro-averaged retrieval precision, recall, F1, and answer
+correctness. These labels are intentionally separate from faithfulness labels:
+an answer can be faithful to an incomplete or incorrect source.
 
 ## What this project demonstrates
 

@@ -1,0 +1,3 @@
+# Keep this environment separate from RAGAS because of the click dependency.
+deepeval==4.1.5
+anthropic==0.121.0

@@ -1,0 +1,5 @@
+# Keep this environment separate from DeepEval because of the click dependency.
+ragas==0.4.3
+langchain-anthropic==1.5.4
+langchain-community==0.3.31
+anthropic==0.121.0

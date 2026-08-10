@@ -5,14 +5,23 @@ Uses single_turn_ascore to score one sample at a time, which sidesteps the
 batch-runner hang seen in ragas 0.4.x. Judge is Claude (RAGAS defaults to
 OpenAI, so we wrap ChatAnthropic to override it).
 
-Run:  python3 ragas_faithfulness.py
+Run:  python3 ragas_faithfulness.py [--json]
 Needs: ANTHROPIC_API_KEY in the environment.
 """
 import asyncio
+import argparse
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+
 from ragas.dataset_schema import SingleTurnSample
 from ragas.metrics import Faithfulness
 from ragas.llms import LangchainLLMWrapper
 from langchain_anthropic import ChatAnthropic
+from eval_result import CaseResult, ClaimResult, EvaluationResult
+from retry import async_retry_call
 
 llm = LangchainLLMWrapper(ChatAnthropic(model="claude-sonnet-4-6", temperature=0))
 scorer = Faithfulness(llm=llm)
@@ -36,11 +45,71 @@ hallucinated = SingleTurnSample(
     retrieved_contexts=context,
 )
 
-async def main():
-    g = await scorer.single_turn_ascore(grounded)
-    h = await scorer.single_turn_ascore(hallucinated)
-    print("\n=== RAGAS Faithfulness ===")
-    print("GROUNDED     :", round(g, 3))
-    print("HALLUCINATED :", round(h, 3))
+async def main(json_output: bool):
+    started = time.perf_counter()
+    g = await async_retry_call(
+        lambda: scorer.single_turn_ascore(grounded),
+        operation_name="ragas.grounded",
+    )
+    h = await async_retry_call(
+        lambda: scorer.single_turn_ascore(hallucinated),
+        operation_name="ragas.hallucinated",
+    )
+    result = EvaluationResult(
+        framework="ragas",
+        metric="faithfulness",
+        cases=[
+            CaseResult(
+                case_id="grounded",
+                score=g,
+                passed=g >= 0.9,
+                claims=[
+                    ClaimResult(
+                        claim="Inferior wall myocardial infarction",
+                        supported=True,
+                        evidence=[context[0]],
+                    ),
+                    ClaimResult(
+                        claim="Occlusion of the right coronary artery",
+                        supported=True,
+                        evidence=[context[0]],
+                    ),
+                ],
+            ),
+            CaseResult(
+                case_id="hallucinated",
+                score=h,
+                passed=h >= 0.9,
+                claims=[
+                    ClaimResult(
+                        claim="Inferior wall myocardial infarction",
+                        supported=True,
+                        evidence=[context[0]],
+                    ),
+                    ClaimResult(
+                        claim="Occlusion of the left anterior descending artery",
+                        supported=False,
+                    ),
+                    ClaimResult(
+                        claim="Treatment with thrombolytics within 90 minutes",
+                        supported=False,
+                    ),
+                ],
+            ),
+        ],
+        model="claude-sonnet-4-6",
+        latency_ms=round((time.perf_counter() - started) * 1000, 2),
+    )
+    if json_output:
+        print(result.to_json())
+    else:
+        print("\n=== RAGAS Faithfulness ===")
+        print("GROUNDED     :", round(g, 3))
+        print("HALLUCINATED :", round(h, 3))
 
-asyncio.run(main())
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--json", action="store_true", help="Emit normalized JSON.")
+    args = parser.parse_args()
+    asyncio.run(main(args.json))

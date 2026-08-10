@@ -1,0 +1,38 @@
+[
+  {
+    "case_id": "gold-01-grounded",
+    "source": "The first-line treatment for anaphylaxis is intramuscular epinephrine.",
+    "answer": "First-line treatment for anaphylaxis is intramuscular epinephrine.",
+    "expected_pass": true
+  },
+  {
+    "case_id": "gold-02-contradiction",
+    "source": "The first-line treatment for anaphylaxis is intramuscular epinephrine.",
+    "answer": "First-line treatment for anaphylaxis is diphenhydramine.",
+    "expected_pass": false
+  },
+  {
+    "case_id": "gold-03-unsupported-addition",
+    "source": "Iron deficiency anemia typically presents as a microcytic anemia with low ferritin.",
+    "answer": "Iron deficiency anemia is microcytic with low ferritin and always causes chest pain.",
+    "expected_pass": false
+  },
+  {
+    "case_id": "gold-04-negation",
+    "source": "Patients with a true penicillin allergy should not receive penicillin.",
+    "answer": "Patients with a true penicillin allergy should not receive penicillin.",
+    "expected_pass": true
+  },
+  {
+    "case_id": "gold-05-numeric-contradiction",
+    "source": "A serum sodium below 135 mEq/L is classified as hyponatremia.",
+    "answer": "Hyponatremia is defined as a serum sodium below 125 mEq/L.",
+    "expected_pass": false
+  },
+  {
+    "case_id": "gold-06-source-limited",
+    "source": "This source describes aspirin as an antiplatelet medication.",
+    "answer": "The source describes aspirin as an antiplatelet medication.",
+    "expected_pass": true
+  }
+]

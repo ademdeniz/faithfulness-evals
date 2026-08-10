@@ -1,0 +1,44 @@
+name: Build evaluation report
+
+on:
+  workflow_run:
+    workflows: ["Live evaluation"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  report:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          path: results
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          inputs = sorted(Path("results").glob("**/*-result.json"))
+          if not inputs:
+              raise SystemExit("No normalized framework results found")
+          combined = [json.loads(path.read_text()) for path in inputs]
+          Path("results/combined-results.json").write_text(
+              json.dumps(combined, indent=2) + "\n"
+          )
+          PY
+          python tools/html_report.py results/combined-results.json results/report.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: faithfulness-html-report
+          path: results/report.html

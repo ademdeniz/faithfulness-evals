@@ -8,14 +8,18 @@
 cd ~/faithfulness-evals/ragas
 python3 -m venv ../.venv-ragas
 source ../.venv-ragas/bin/activate
-pip install ragas langchain-anthropic "langchain-community==0.3.31"
+pip install -r ../requirements-ragas.txt
 
 python3 ragas_faithfulness.py
 ```
 
 If a different venv (e.g. `.venv-deepeval`) is already active in this shell, run `deactivate` first, or you'll get a `ModuleNotFoundError`.
 
-`langchain-community` must stay pinned to `0.3.31` (not the latest 0.4.x) — ragas 0.4.3 imports `langchain_community.chat_models.vertexai` directly, and that module was removed in the 0.4.x line as part of the package's "sunset"/deprecation, causing `ModuleNotFoundError: No module named 'langchain_community.chat_models.vertexai'`. If `pip install ragas` or `langchain-anthropic` silently upgrades it back to 0.4.x, re-run `pip install "langchain-community==0.3.31"` to re-pin it.
+`langchain-community` is pinned to `0.3.31` (not the latest 0.4.x) — ragas
+0.4.3 imports `langchain_community.chat_models.vertexai` directly, and that
+module was removed in the 0.4.x line as part of the package's
+"sunset"/deprecation, causing `ModuleNotFoundError`. Reinstall from
+`requirements-ragas.txt` if the environment becomes inconsistent.
 
 Expected: GROUNDED ~1.0; HALLUCINATED ~0.333 (one of three claims grounded).
 

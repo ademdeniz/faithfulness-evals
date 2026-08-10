@@ -14,7 +14,7 @@ cd ~/faithfulness-evals/promptfoo
 npx promptfoo@latest eval -c 01_faithfulness_pass_fail.yaml --no-cache
 npx promptfoo@latest view
 
-# 2) 20-case suite (10 grounded PASS, 10 adversarial FAIL -> ~50% by design)
+# 2) 30-case suite (15 grounded PASS, 15 adversarial FAIL -> ~50% by design)
 npx promptfoo@latest eval -c 02_faithfulness_suite_20.yaml --no-cache
 npx promptfoo@latest view
 
