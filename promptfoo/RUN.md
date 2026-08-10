@@ -3,23 +3,38 @@
 Promptfoo is a Node tool. Use Node 24 and set `ANTHROPIC_API_KEY` only in the
 shell where live generator evaluations will run.
 
+Copy only the commands inside the code blocks, not the surrounding Markdown
+fences or explanatory text.
+
 ```bash
 nvm use 24
 cd /path/to/faithfulness-evals/promptfoo
+```
 
-# 1) Two-case judge test
+Run the two-case judge test:
+
+```bash
 npx promptfoo@latest eval -c 01_faithfulness_pass_fail.yaml --no-cache
 npx promptfoo@latest view
+```
 
-# 2) 30-case suite (15 grounded PASS, 15 adversarial FAIL -> ~50% by design)
+Run the 30-case judge-validation suite:
+
+```bash
 npx promptfoo@latest eval -c 02_faithfulness_suite_20.yaml --no-cache
 npx promptfoo@latest view
+```
 
-# 3) Live generator test (3 models, 1 judge; sparse source)
+Run the live generator test:
+
+```bash
 npx promptfoo@latest eval -c 03_generator_test.yaml --no-cache
 npx promptfoo@latest view
+```
 
-# 4) Enriched-source controlled experiment (failures should flip to PASS)
+Run the enriched-source controlled experiment:
+
+```bash
 npx promptfoo@latest eval -c 04_generator_enriched.yaml --no-cache
 npx promptfoo@latest view
 ```
