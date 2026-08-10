@@ -58,6 +58,7 @@ jobs:
           path: |
             promptfoo/.promptfoo/
             promptfoo/*.json
+          include-hidden-files: true
           if-no-files-found: ignore
 
   deepeval:
