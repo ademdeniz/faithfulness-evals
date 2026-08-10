@@ -18,6 +18,9 @@ from tools.retry import retry_call
 from tools.validate_workflows import validate_workflow
 from tools.promptfoo_results import normalize_promptfoo
 from tools.regression import compare_baseline
+from tools.reliability import analyze_reliability
+from tools.schema_migrations import migrate_result
+from tools.privacy_scan import scan_text
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -298,6 +301,46 @@ class ResultSchemaTest(unittest.TestCase):
                 {"accuracy": 0.9, "latency_ms": 1000, "estimated_cost_usd": 0.05},
             )["passed"]
         )
+
+    def test_reliability_reports_flips_and_score_variance(self):
+        report = analyze_reliability(
+            [
+                {
+                    "cases": [{"case_id": "case-1", "score": 0.4, "passed": False}]
+                },
+                {
+                    "cases": [{"case_id": "case-1", "score": 0.8, "passed": True}]
+                },
+            ]
+        )
+
+        self.assertEqual(report["verdict_flip_count"], 1)
+        self.assertEqual(report["verdict_agreement_rate"], 0.0)
+        self.assertAlmostEqual(report["cases"][0]["score_mean"], 0.6)
+
+    def test_legacy_result_migrates_to_current_schema(self):
+        migrated = migrate_result(
+            {
+                "framework": "legacy",
+                "metric": "faithfulness",
+                "cases": [{"case_id": "case-1", "score": 1.0, "passed": True}],
+            }
+        )
+
+        self.assertEqual(migrated["schema_version"], 1)
+        self.assertEqual(migrated["cases"][0]["claims"], [])
+        self.assertIsNone(migrated["model"])
+
+    def test_privacy_scan_detects_identifiers_without_printing_values(self):
+        findings = scan_text(
+            "Contact jane@example.com, phone 555-123-4567, MRN: ABC-1234."
+        )
+
+        self.assertEqual(
+            [finding["type"] for finding in findings],
+            ["email", "phone", "medical_record_number"],
+        )
+        self.assertNotIn("jane@example.com", str(findings))
 
 
 if __name__ == "__main__":

@@ -7,6 +7,9 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
 
+SCHEMA_VERSION = 1
+
+
 @dataclass
 class ClaimResult:
     claim: str
@@ -28,6 +31,7 @@ class EvaluationResult:
     framework: str
     metric: str
     cases: list[CaseResult]
+    schema_version: int = SCHEMA_VERSION
     model: str | None = None
     latency_ms: float | None = None
     input_tokens: int | None = None
