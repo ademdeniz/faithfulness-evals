@@ -5,7 +5,7 @@
 `ANTHROPIC_API_KEY` is exported globally in `~/.zshrc`, so it doesn't need to be set here — just make sure it's a fresh terminal tab (older tabs opened before the key was added won't have it).
 
 ```bash
-cd ~/Desktop/faithfulness-evals/ragas
+cd ~/faithfulness-evals/ragas
 python3 -m venv ../.venv-ragas
 source ../.venv-ragas/bin/activate
 pip install ragas langchain-anthropic "langchain-community==0.3.31"

@@ -8,7 +8,7 @@ Promptfoo is a Node tool. Node 22 was too old for recent versions; use Node 24.
 
 ```bash
 nvm use 24
-cd ~/Desktop/faithfulness-evals/promptfoo
+cd ~/faithfulness-evals/promptfoo
 
 # 1) Two-case judge test
 npx promptfoo@latest eval -c 01_faithfulness_pass_fail.yaml --no-cache
