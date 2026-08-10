@@ -384,6 +384,26 @@ single-run evaluations can hide.
 the same cases. Replace the fixture with normalized live outputs to measure
 model disagreement before selecting a production judge.
 
+### Optional live multi-judge add-on
+
+The fixture can later be replaced by a capped live orchestrator that sends the
+same cases to multiple judge models:
+
+```bash
+python3 tools/run_multi_judge.py \
+  --cases data/gold_cases.json \
+  --models judge-a,judge-b,judge-c \
+  --max-cases 10
+```
+
+This is intentionally an add-on rather than part of pull-request CI. Each
+case/model combination creates a provider call, so three judges evaluating ten
+cases means up to 30 calls. Keep the command manual, use a small case limit,
+and run the existing reliability/comparison tools on the normalized outputs.
+The repository currently includes the offline fixture and analysis step; the
+orchestrator command is a planned extension requiring provider-specific model
+configuration and API credentials.
+
 ## Result schema versioning
 
 Normalized results include `schema_version`. Legacy files without a version can
@@ -477,6 +497,39 @@ retrieval context, and judge calibration.
    HTML report.
 5. Discuss the limitations and the clinician-review placeholder rather than
    presenting starter labels as clinical evidence.
+
+## Roadmap
+
+### Completed
+
+- Reproducible Promptfoo, DeepEval, and RAGAS evaluation examples
+- Shared normalized result schema with claim-level diagnostics
+- Gold-label accuracy, retrieval metrics, regression gates, and reliability analysis
+- Manual live workflows with timeouts, retries, budgets, and artifact retention
+- Privacy scanning, schema migrations, HTML reporting, and CI validation
+- Clinical review placeholders and interview-oriented documentation
+
+### Near term
+
+- Implement the optional capped live multi-judge orchestrator described above.
+- Add provider-specific model configuration and normalized multi-judge outputs.
+- Replace starter regression values with reviewed benchmark baselines.
+- Expand synthetic cases for conflicting sources, temporal facts, dosing, and
+  retrieval omissions.
+- Add adjudication fields and a disagreement workflow for reviewer decisions.
+
+### Longer term
+
+- Obtain qualified clinical review for benchmark cases.
+- Add scheduled model and retrieval drift monitoring.
+- Track benchmark versions, judge prompts, and evaluation-run provenance.
+- Build a dashboard for trend, cost, latency, and disagreement analysis.
+- Add controlled experiments for retrieval quality, prompt changes, and model
+  upgrades before production adoption.
+
+The roadmap intentionally keeps live provider calls and clinical approval
+outside pull-request CI until their cost, privacy, and review requirements are
+explicitly controlled.
 
 ## What this project demonstrates
 
