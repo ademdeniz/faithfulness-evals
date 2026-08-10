@@ -241,6 +241,16 @@ positives from false negatives. The included labels are starter gold data and
 should be reviewed by a qualified medical subject-matter expert before being
 used as a production benchmark.
 
+Each gold case now includes `review_status`, reviewer ownership, and
+claim-level `severity`/`evidence` annotations. They intentionally remain
+`pending_clinician_review`; the repository does not represent automated labels
+as clinical approval.
+
+For a portfolio-friendly review handoff, see the
+[clinical review placeholder](docs/CLINICAL_REVIEW_GUIDE.md) and copy the
+[review template](data/clinical_review_template.json). Do not add patient
+identifiers or real clinical notes to this repository.
+
 To score normalized framework output directly, use matching `case_id` values:
 
 ```bash
@@ -370,6 +380,10 @@ The report shows per-case verdict agreement, verdict flips, mean score, and
 population score standard deviation. Repeated runs expose borderline cases that
 single-run evaluations can hide.
 
+`data/multi_judge_fixture.json` demonstrates comparing three judge models with
+the same cases. Replace the fixture with normalized live outputs to measure
+model disagreement before selecting a production judge.
+
 ## Result schema versioning
 
 Normalized results include `schema_version`. Legacy files without a version can
@@ -397,6 +411,32 @@ record numbers. It reports only category and character offset, never the
 detected value. This is a safeguard, not a replacement for clinical privacy
 review.
 
+## Evaluation architecture
+
+```text
+source + prompt
+      |
+      v
+generator (optional) ---> answer
+                              |
+                              v
+                    faithfulness judge
+                              |
+                              v
+       claim diagnostics + normalized result schema
+                              |
+          +-------------------+-------------------+
+          v                   v                   v
+   gold accuracy       framework comparison   HTML report
+          |                   |                   |
+          +------------ regression gates -------+
+```
+
+The framework-specific adapters keep Promptfoo, DeepEval, and RAGAS
+replaceable while the shared result schema makes their outputs comparable.
+Offline fixtures validate the harness; manual live workflows validate provider
+integrations without making API calls part of pull-request CI.
+
 ## Retrieval and answer correctness
 
 Faithfulness does not measure whether retrieval found the right evidence or
@@ -411,6 +451,32 @@ python3 tools/retrieval_correctness.py data/metric_cases.json
 The report includes macro-averaged retrieval precision, recall, F1, and answer
 correctness. These labels are intentionally separate from faithfulness labels:
 an answer can be faithful to an incomplete or incorrect source.
+
+## Results and limitations
+
+The current fixtures demonstrate the complete workflow: adversarial judge
+validation, normalized cross-framework comparison, claim-level diagnostics,
+regression thresholds, repeated-run reliability, privacy checks, and a
+multi-judge disagreement example. They are intentionally small and synthetic
+so the project can run offline and remain safe to share.
+
+This is an evaluation harness, not a clinical decision-support system. The
+starter gold labels still require qualified clinical review, faithfulness does
+not establish medical correctness or safety, and provider token/cost metadata
+may be unavailable. Live results can also vary with model versions, prompts,
+retrieval context, and judge calibration.
+
+## Interview walkthrough
+
+1. Run the offline validation commands in [Quickstart](#quickstart).
+2. Show the adversarial cases and explain why judge validation comes before
+   comparing generators.
+3. Run the manual live workflow only when API credentials and a bounded budget
+   are available.
+4. Inspect normalized JSON, compare framework disagreement, and generate the
+   HTML report.
+5. Discuss the limitations and the clinician-review placeholder rather than
+   presenting starter labels as clinical evidence.
 
 ## What this project demonstrates
 

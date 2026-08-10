@@ -72,6 +72,7 @@ def main() -> int:
         help="Legacy path to cases containing expected_pass and predicted_pass.",
     )
     parser.add_argument("--gold", type=Path, help="Gold cases with expected_pass.")
+    parser.add_argument("--min-accuracy", type=float, default=None)
     parser.add_argument(
         "--results",
         type=Path,
@@ -86,7 +87,10 @@ def main() -> int:
         cases = json.loads(args.predictions.read_text(encoding="utf-8"))
     else:
         parser.error("provide predictions, or both --gold and --results")
-    print(json.dumps(calculate_metrics(cases), indent=2))
+    metrics = calculate_metrics(cases)
+    print(json.dumps(metrics, indent=2))
+    if args.min_accuracy is not None and metrics["accuracy"] < args.min_accuracy:
+        return 1
     return 0
 
 
