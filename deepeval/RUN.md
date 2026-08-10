@@ -7,7 +7,7 @@ Copy only the commands inside the code blocks, not the surrounding Markdown
 fences or explanatory text.
 
 ```bash
-cd /path/to/faithfulness-evals
+cd "$(git rev-parse --show-toplevel)"
 python3 -m venv .venv-deepeval
 .venv-deepeval/bin/pip install -r requirements-deepeval.txt
 
@@ -27,7 +27,7 @@ To run DeepEval and RAGAS together with normalized output, use the shared
 runner after creating both environments:
 
 ```bash
-cd /path/to/faithfulness-evals
+cd "$(git rev-parse --show-toplevel)"
 python3 tools/run_evals.py \
   --deepeval-python .venv-deepeval/bin/python \
   --ragas-python .venv-ragas/bin/python
