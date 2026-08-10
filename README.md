@@ -323,6 +323,17 @@ python3 tools/html_report.py \
 The report includes framework, case, score, verdict, reason, and cross-framework
 agreement when multiple frameworks are present.
 
+Promptfoo output is normalized with:
+
+```bash
+python3 tools/promptfoo_results.py \
+  promptfoo/.promptfoo/output.json \
+  results/promptfoo-result.json
+```
+
+The adapter preserves Promptfoo case IDs, scores, verdicts, reasons, latency,
+provider, and token usage in the shared schema.
+
 ## Retrieval and answer correctness
 
 Faithfulness does not measure whether retrieval found the right evidence or

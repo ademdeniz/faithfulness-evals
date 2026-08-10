@@ -51,6 +51,9 @@ jobs:
           # Promptfoo returns 100 when assertions fail; this suite intentionally
           # includes adversarial cases that must fail.
           test "$status" -eq 0 -o "$status" -eq 100
+      - name: Normalize Promptfoo result
+        working-directory: promptfoo
+        run: python ../tools/promptfoo_results.py .promptfoo/output.json ../promptfoo-result.json
       - name: Upload Promptfoo artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -58,6 +61,7 @@ jobs:
           path: |
             promptfoo/.promptfoo/
             promptfoo/*.json
+            promptfoo-result.json
           include-hidden-files: true
           if-no-files-found: ignore
 
