@@ -433,29 +433,46 @@ review.
 
 ## Evaluation architecture
 
-```text
-source + prompt
-      |
-      v
-generator (optional) ---> answer
-                              |
-                              v
-                    faithfulness judge
-                              |
-                              v
-       claim diagnostics + normalized result schema
-                              |
-          +-------------------+-------------------+
-          v                   v                   v
-   gold accuracy       framework comparison   HTML report
-          |                   |                   |
-          +------------ regression gates -------+
+```mermaid
+flowchart TD
+    A[Source and prompt] --> B{Generator}
+    B -->|optional| C[Answer]
+    A --> D[Faithfulness judge]
+    C --> D
+    D --> E[Claim diagnostics]
+    E --> F[Normalized result schema]
+    F --> G[Gold accuracy]
+    F --> H[Framework comparison]
+    F --> I[HTML report]
+    G --> J[Regression gates]
+    H --> J
+    I --> J
 ```
 
 The framework-specific adapters keep Promptfoo, DeepEval, and RAGAS
 replaceable while the shared result schema makes their outputs comparable.
 Offline fixtures validate the harness; manual live workflows validate provider
 integrations without making API calls part of pull-request CI.
+
+## Evaluation quality loop
+
+```mermaid
+flowchart LR
+    A[Offline fixtures] --> B[CI validation]
+    B --> C[Manual live run]
+    C --> D[Normalized artifacts]
+    D --> E[Accuracy and reliability]
+    E --> F{Review findings}
+    F -->|pass| G[Compare models]
+    F -->|fail or drift| H[Inspect claims, retrieval, and prompts]
+    H --> A
+    G --> I[Update approved baseline]
+    I --> B
+```
+
+This loop separates deterministic harness checks from provider-dependent
+evaluation runs. Findings feed back into cases, prompts, retrieval checks, or
+baselines instead of being hidden inside a single aggregate score.
 
 ## Retrieval and answer correctness
 
