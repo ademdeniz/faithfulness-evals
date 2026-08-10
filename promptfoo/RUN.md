@@ -1,14 +1,11 @@
 # Running the Promptfoo configs
 
-**Always cd into this folder first, or the config/script won't be found and the viewer may show a stale result.**
-
-Promptfoo is a Node tool. Node 22 was too old for recent versions; use Node 24.
-
-`ANTHROPIC_API_KEY` is exported globally in `~/.zshrc`, so it doesn't need to be set here — just make sure it's a fresh terminal tab (older tabs opened before the key was added won't have it).
+Promptfoo is a Node tool. Use Node 24 and set `ANTHROPIC_API_KEY` only in the
+shell where live generator evaluations will run.
 
 ```bash
 nvm use 24
-cd ~/faithfulness-evals/promptfoo
+cd /path/to/faithfulness-evals/promptfoo
 
 # 1) Two-case judge test
 npx promptfoo@latest eval -c 01_faithfulness_pass_fail.yaml --no-cache
@@ -35,3 +32,17 @@ Notes:
   structure to JSON" serialization bug when the provider had to GENERATE.
 - `temperature` is deprecated on Sonnet 5 / Opus 4.x and is silently omitted.
   Harmless.
+- The two judge-validation configs use the `echo` provider and do not require
+  an API key. The generator configs make live provider calls and do require
+  `ANTHROPIC_API_KEY`.
+- Promptfoo can return exit code `100` when expected adversarial assertions
+  fail. Treat that as an evaluation result, not automatically as an
+  infrastructure error.
+
+From the repository root, normalize a Promptfoo JSON result for comparison:
+
+```bash
+python3 tools/promptfoo_results.py \
+  path/to/promptfoo-output.json \
+  results/promptfoo-results.json
+```

@@ -1,16 +1,14 @@
 # Running the DeepEval demo
 
-**Always cd into this folder first, or the config/script won't be found and the viewer may show a stale result.**
-
-`ANTHROPIC_API_KEY` is exported globally in `~/.zshrc`, so it doesn't need to be set here — just make sure it's a fresh terminal tab (older tabs opened before the key was added won't have it).
+Set `ANTHROPIC_API_KEY` in the shell where the live demo will run. Run these
+commands from the repository checkout:
 
 ```bash
-cd ~/faithfulness-evals/deepeval
+cd /path/to/faithfulness-evals
 python3 -m venv .venv-deepeval
-source .venv-deepeval/bin/activate
-pip install -r ../requirements-deepeval.txt
+.venv-deepeval/bin/pip install -r requirements-deepeval.txt
 
-python3 faithfulness_demo.py
+.venv-deepeval/bin/python deepeval/faithfulness_demo.py
 ```
 
 If a different venv (e.g. `.venv-ragas`) is already active in this shell, run `deactivate` first, or you'll get `ModuleNotFoundError: No module named 'deepeval'`.
@@ -21,3 +19,12 @@ OpenAI, so we pass `model=AnthropicModel(...)` to use Claude as the judge.
 
 Uses `.measure()` directly (not `assert_test`) so both cases run and print
 instead of pytest aborting on the first failure.
+
+To run DeepEval and RAGAS together with normalized output, use the shared
+runner after creating both environments:
+
+```bash
+python3 tools/run_evals.py \
+  --deepeval-python .venv-deepeval/bin/python \
+  --ragas-python .venv-ragas/bin/python
+```
