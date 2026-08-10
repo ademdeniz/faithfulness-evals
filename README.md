@@ -212,7 +212,7 @@ Pull requests run offline checks through
 cover Python syntax, the normalized result contract, and patch formatting. The
 live framework evaluations remain opt-in because they require API keys and incur
 model costs. Live API evaluations are available only through the manually
-dispatched [live workflow](/Users/ademgaric/faithfulness-evals.worktrees/framework-improvement-suggestions/.github/workflows/live-evaluation.yml).
+dispatched [live workflow](.github/workflows/live-evaluation.yml).
 It requires an `ANTHROPIC_API_KEY` repository secret, limits runtime to 15
 minutes, and enforces an explicit maximum test count. Normal pushes and pull
 requests never make provider calls.
@@ -552,4 +552,4 @@ Adem Garic — Senior SDET / QA Engineer
 
 ## License
 
-All rights reserved. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
