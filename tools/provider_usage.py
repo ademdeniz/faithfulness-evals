@@ -5,16 +5,33 @@ from __future__ import annotations
 from typing import Any
 
 
+def _value(value: Any, name: str, default: Any = None) -> Any:
+    if isinstance(value, dict):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
 def extract_usage(response: dict[str, Any]) -> dict[str, int]:
-    usage = response.get("usage", response.get("usage_metadata", {}))
+    usage = _value(response, "usage", None) or _value(
+        response, "usage_metadata", {}
+    )
     return {
         "input_tokens": int(
-            usage.get("input_tokens", usage.get("prompt_tokens", 0))
+            _value(usage, "input_tokens", _value(usage, "prompt_tokens", 0))
         ),
         "output_tokens": int(
-            usage.get("output_tokens", usage.get("completion_tokens", 0))
+            _value(usage, "output_tokens", _value(usage, "completion_tokens", 0))
         ),
     }
+
+
+def usage_from_objects(*objects: Any) -> dict[str, int] | None:
+    """Return the first non-empty usage metadata exposed by an object."""
+    for obj in objects:
+        usage = extract_usage(obj)
+        if usage["input_tokens"] or usage["output_tokens"]:
+            return usage
+    return None
 
 
 def estimate_cost(

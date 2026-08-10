@@ -293,6 +293,17 @@ accept both Anthropic-style (`input_tokens`/`output_tokens`) and OpenAI-style
 (`prompt_tokens`/`completion_tokens`) responses. Prices are passed explicitly
 to `estimate_cost`; no pricing assumptions are hidden in the evaluator.
 
+The Python adapters inspect usage metadata exposed by the installed framework
+objects. Set pricing explicitly when usage is available:
+
+```bash
+export ANTHROPIC_INPUT_USD_PER_MILLION=3
+export ANTHROPIC_OUTPUT_USD_PER_MILLION=15
+```
+
+Framework versions that hide provider usage leave token and cost fields null;
+the adapters never estimate usage from text length.
+
 Transient timeout, connection, HTTP 429, and HTTP 5xx failures receive bounded
 exponential retries through [`tools/retry.py`](tools/retry.py). Permanent errors
 are raised immediately. The shared runner also applies a per-framework timeout
@@ -333,6 +344,19 @@ python3 tools/promptfoo_results.py \
 
 The adapter preserves Promptfoo case IDs, scores, verdicts, reasons, latency,
 provider, and token usage in the shared schema.
+
+## Regression baselines
+
+Store approved metrics in a baseline JSON file and compare new runs:
+
+```bash
+python3 tools/regression.py \
+  data/regression_baseline.json \
+  data/regression_current.json
+```
+
+The default gates allow at most a five-point accuracy drop and 25% increases in
+latency or estimated cost. A failed gate returns a non-zero exit code for CI.
 
 ## Retrieval and answer correctness
 
