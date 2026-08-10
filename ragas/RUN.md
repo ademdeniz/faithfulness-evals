@@ -1,16 +1,14 @@
 # Running the RAGAS demo
 
-**Always cd into this folder first, or the config/script won't be found and the viewer may show a stale result.**
-
-`ANTHROPIC_API_KEY` is exported globally in `~/.zshrc`, so it doesn't need to be set here — just make sure it's a fresh terminal tab (older tabs opened before the key was added won't have it).
+Set `ANTHROPIC_API_KEY` in the shell where the live demo will run. Run these
+commands from the repository checkout:
 
 ```bash
-cd ~/faithfulness-evals/ragas
-python3 -m venv ../.venv-ragas
-source ../.venv-ragas/bin/activate
-pip install -r ../requirements-ragas.txt
+cd /path/to/faithfulness-evals
+python3 -m venv .venv-ragas
+.venv-ragas/bin/pip install -r requirements-ragas.txt
 
-python3 ragas_faithfulness.py
+.venv-ragas/bin/python ragas/ragas_faithfulness.py
 ```
 
 If a different venv (e.g. `.venv-deepeval`) is already active in this shell, run `deactivate` first, or you'll get a `ModuleNotFoundError`.
@@ -31,3 +29,12 @@ Notes:
   import are harmless on 0.4.x.
 - Keep RAGAS in its OWN venv — its `langchain-anthropic` dep upgrades `click`
   past what deepeval allows.
+
+To run DeepEval and RAGAS together with normalized output, use the shared
+runner after creating both environments:
+
+```bash
+python3 tools/run_evals.py \
+  --deepeval-python .venv-deepeval/bin/python \
+  --ragas-python .venv-ragas/bin/python
+```
